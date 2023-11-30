@@ -1,7 +1,9 @@
 package sia.soundsystem;
 
-
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.StandardOutputStreamLog;
+import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
@@ -13,6 +15,12 @@ import static org.junit.Assert.*;
 @ContextConfiguration(classes = CDPlayerConfig.class)
 public class CDPlayerTest {
 
+    @Rule
+    public final StandardOutputStreamLog log = new StandardOutputStreamLog();
+
+    @Autowired
+    private MediaPlayer player;
+
     @Autowired
     private CompactDisc cd;
 
@@ -20,4 +28,14 @@ public class CDPlayerTest {
     public void cdShouldNotBeNull() {
         assertNotNull(cd);
     }
+
+    @Test
+    public void play() {
+        player.play();
+        assertEquals(
+            "Playing Sgt. Pepper's Lonely Hearts Club Band by The Beatles\n",
+                log.getLog()
+            );
+    }
 }
+

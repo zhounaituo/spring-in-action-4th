@@ -435,28 +435,33 @@ spring-websocket-4.0.0.RELEASE.jar
 #### 3.2.1 创建自动装配的步骤
 
 ```bash
-1. 利用 @Component 创建需要的 Bean 类
+1. 利用 @Component 创建需要的 Bean 类, 利用 @Autowrite 申明自动装配
 2. 利用 @ComponentScan 创建扫描类
 ```
 
 1. 利用 @Bean 创建需要的 Bean 类
 ```java
-package sia.soundsystem;  
-  
-import org.springframework.stereotype.Component;  
-  
-@Component  
-public class SgtPeppers implements CompactDisc{  
-    private String title = "Sgt. Pepper's Lonely Hearts Club Band";  
-    private String artist = "The Beatles";  
-  
-    public void play() {  
-        System.out.println("Playing " + title + " by " + artist);  
-    }  
+package soundsystem;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Component
+public class CDPlayer implements MediaPlayer {
+  private CompactDisc cd;
+
+  @Autowired
+  public CDPlayer(CompactDisc cd) {
+    this.cd = cd;
+  }
+
+  public void play() {
+    cd.play();
+  }
+
 }
 ```
 
-2. 利用 @ComponentScan 创建扫描类
+2. 利用 @ComponentScan 创建扫描类。
 ```java
 package sia.soundsystem;  
   
@@ -470,6 +475,12 @@ public class CDPlayerConfig {
 ```
 
 #### 3.2.2 为组件扫描的 bean 命名
+
+```bash 
+1. Spring 应用上下文会默认给每一个 bean 一个 ID（通常为首字母小写的类名）。
+2. 使用 @Component 命名
+3. 使用 @Named 命名。
+```
 
 1. Spring 应用上下文会默认给每一个 bean 一个 ID（通常为首字母小写的类名）。
 ```java
@@ -498,6 +509,14 @@ public class SgtPeppers implements CompactDisc {
 > 可以使用但是不建议，因为这个名字对于开发者来说没有明显的用意。
 
 #### 3.2.3. 设置扫描的基础包
+
+```bash
+1. 扫描会向 @ComponentScan 设置默认属性（以配置类所在的包作为基础包来扫描组件）。
+2. 指定扫描的基础包
+3. 更加清晰的表明基础包
+4. 配置多个扫描包
+5. 指定包中的接口或是类。
+```
 
 1. 扫描会向 @ComponentScan 设置默认属性（以配置类所在的包作为基础包来扫描组件）。
 2. 指定扫描的基础包
@@ -604,3 +623,78 @@ public class CDPlayer {
   ...
 }
 ```
+
+### 3.3. Java 代码装配
+
+#### 3.3.1. Java 代码配置步骤
+
+```bash
+1. 创建好需要注入的类（同 3.2.1 中的 1 方法），这里不同的是不需要使用 @Component 进行注解
+2. 创建配置类，并注入
+```
+
+1. 创建好需要注入的类（同 3.2.1 中的 1 方法），这里不同的是不需要使用 @Component 进行注解
+```java
+package soundsystem;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+public class CDPlayer implements MediaPlayer {
+  private CompactDisc cd;
+
+  public CDPlayer(CompactDisc cd) {
+    this.cd = cd;
+  }
+
+  public void play() {
+    cd.play();
+  }
+
+}
+```
+
+2. 创建配置类，并注入
+```java
+package soundsystem;
+
+import org.spingframework.context.annotation.Configuration;
+
+@Configuration
+public class CDPlayerConfig {
+
+	@Bean
+	public CompactDisc sgtPeppers() {
+		return new SgtPeppers();
+	}
+
+	@Bean 
+	public CDPlayer cdPlayer() {
+		// 方法一: 这里使用了 sgtPeppers 的 bean ID 进行注入
+		return new CDPlayer(sgtPeppers());
+	}
+
+	@Bean 
+	public CDPlayer cdPlayer(CompactDisc compactDisc) {
+		// 方法二：这里直接通过 CompactDisc 进行注入。
+		return new CDPlayer(compactDisc)
+	}
+
+	@Bean
+	public CDPlayer cdPlayer(CompactDisc compactDisc) {
+		// 这里将 CompactDisc 注入到 CDPlayer 的 setter 方法中
+		CDPlayer cdPlayer = new CDPlayer(compactDisc);
+		cdPlayer.setCompactDisc(compactDisc);
+		return cdPlayer;
+	}
+}
+```
+> 这里有几步：
+> 	1. 去掉自动扫描注释 @ComponentScan
+> 	2. 添加 Bean（由 @Bean 标志）
+> 	3. 注入
+
+### 3.4. 使用 XML 装配
+
+> 获取一个基础的 Spring.xml 文件可以使用 [Spring Tool Suite](https://spring.io/tools/sts)。
+
+
